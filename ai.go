@@ -45,17 +45,19 @@ func (t *Tree) Fill(height, concurrencyDepth int, fin chan bool) {
 		
 		for i := 0; i < 4; i++ {
 			node := &Tree{t.G.Clone(), nil, false, 0, 0}
-			node.G.Move(i)
-			t.Children[i] = node
+			if node.G.Move(i) {
+				// We only execute the move if tiles would be moving
+				t.Children[i] = node
 
-			if !node.G.PlaceRandom() {
-				node.Done = true
-			} else {
-				if concurrencyDepth > 0 {
-					go node.Fill(height-1, concurrencyDepth-1, subfin)
-					fills++
+				if !node.G.PlaceRandom() {
+					node.Done = true
 				} else {
-					node.Fill(height-1, concurrencyDepth, subfin)
+					if concurrencyDepth > 0 {
+						go node.Fill(height-1, concurrencyDepth-1, subfin)
+						fills++
+					} else {
+						node.Fill(height-1, concurrencyDepth, subfin)
+					}
 				}
 			}
 		}
@@ -66,7 +68,7 @@ func (t *Tree) Fill(height, concurrencyDepth int, fin chan bool) {
 	} else {
 		// Recursively fill the children that aren't done
 		for _, node := range t.Children {
-			if !node.Done {
+			if node != nil && !node.Done {
 				node.Fill(height-1, concurrencyDepth-1, generateFinChan(concurrencyDepth))
 			}
 		}
@@ -81,6 +83,9 @@ func (t *Tree) Fill(height, concurrencyDepth int, fin chan bool) {
 // minimax algorithm. The root of the tree will contain the best score
 // and direction
 func (t *Tree) Score() {
+	if t == nil {
+		return
+	}
 	if t.Children == nil || t.Done {
 		t.BestScore = t.G.Score
 		t.BestDirection = -1
@@ -88,10 +93,12 @@ func (t *Tree) Score() {
 		t.BestScore = 0
 		t.BestDirection = -1
 		for i, child := range t.Children {
-			child.Score()
-			if child.BestScore > t.BestScore {
-				t.BestScore = child.BestScore
-				t.BestDirection = i
+			if child != nil {
+				child.Score()
+				if child.BestScore > t.BestScore {
+					t.BestScore = child.BestScore
+					t.BestDirection = i
+				}
 			}
 		}
 	}

@@ -128,8 +128,9 @@ func DirectionToString(direction int) string {
 	}
 }
 
-// Move moves the tiles in the grid in the given direction
-func (grid *Grid) Move(direction int) {
+// Move moves the tiles in the grid in the given direction. It returns
+// false if no tiles moved, and true otherwise.
+func (grid *Grid) Move(direction int) (ret bool) {
 	switch direction {
 	case LEFT, RIGHT:
 		// Goes row by row
@@ -149,15 +150,20 @@ func (grid *Grid) Move(direction int) {
 				case grid.Tiles[r][moveCol] == 0:
 					// Move grid.Tiles[r][c] all the way down
 					grid.Tiles[r][c], grid.Tiles[r][moveCol] = 0, grid.Tiles[r][c]
+					ret = true
 				case grid.Tiles[r][moveCol] == grid.Tiles[r][c]:
 					// Merge grid.Tiles[r][c] with grid.Tiles[r][moveCol]
 					grid.Tiles[r][c], grid.Tiles[r][moveCol] = 0, grid.Tiles[r][c]*2
 					grid.Score += uint32(grid.Tiles[r][moveCol])
+					ret = true
 				default:
 					// Increment moveCol and move grid.Tiles[r][c] there, if
 					// it isn't already
 					moveCol += inc
-					grid.Tiles[r][c], grid.Tiles[r][moveCol] = grid.Tiles[r][moveCol], grid.Tiles[r][c]
+					if moveCol != c {
+						grid.Tiles[r][c], grid.Tiles[r][moveCol] = grid.Tiles[r][moveCol], grid.Tiles[r][c]
+						ret = true
+					}
 				}
 			}
 		}
@@ -179,19 +185,25 @@ func (grid *Grid) Move(direction int) {
 				case grid.Tiles[moveRow][c] == 0:
 					// Move grid.Tiles[r][c] all the way down
 					grid.Tiles[r][c], grid.Tiles[moveRow][c] = 0, grid.Tiles[r][c]
+					ret = true
 				case grid.Tiles[moveRow][c] == grid.Tiles[r][c]:
 					// Merge grid.Tiles[r][c] with grid.Tiles[r][moveCol]
 					grid.Tiles[r][c], grid.Tiles[moveRow][c] = 0, grid.Tiles[r][c]*2
 					grid.Score += uint32(grid.Tiles[moveRow][c])
+					ret = true
 				default:
 					// Increment moveRow and move grid.Tiles[r][c] there, if
 					// it isn't already
 					moveRow += inc
-					grid.Tiles[r][c], grid.Tiles[moveRow][c] = grid.Tiles[moveRow][c], grid.Tiles[r][c]
+					if moveRow != r {
+						grid.Tiles[r][c], grid.Tiles[moveRow][c] = grid.Tiles[moveRow][c], grid.Tiles[r][c]
+						ret = true
+					}
 				}
 			}
 		}
 	default:
 		panic("Invalid direction")
 	}
+	return
 }
