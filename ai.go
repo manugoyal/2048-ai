@@ -103,3 +103,26 @@ func (t *Tree) Score() {
 		}
 	}
 }
+
+// Given a grid and some parameters, it figures out the next best
+// move. If it returns -1, that means it couldn't find a move.
+func (g *Grid) NextMove(height, reps, concurrencyDepth int) int {
+	counts := map[int]int{LEFT: 0, RIGHT: 0, UP: 0, DOWN: 0}
+	for j := 0; j < reps; j++ {
+		t := NewTree()
+		t.G = g.Clone()
+		t.Fill(height, concurrencyDepth, nil)
+		t.Score()
+		counts[t.BestDirection]++
+	}
+
+	avgBest := -1
+	avgOcc := 0
+	for k, v := range counts {
+		if v > avgOcc {
+			avgBest = k
+			avgOcc = v
+		}
+	}
+	return avgBest
+}
