@@ -18,8 +18,8 @@ func main() {
 	fmt.Println()
 
 	const (
-		height = 6
-		reps = 3
+		height = 10
+		reps = 1
 		concurrencyDepth = 2
 	)
 

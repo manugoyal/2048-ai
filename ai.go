@@ -3,6 +3,8 @@
 // are random.
 package main
 
+import "math"
+
 type Tree struct {
 	G *Grid
 	Children []*Tree
@@ -85,14 +87,24 @@ func (t *Tree) Score() {
 		t.BestScore = t.G.Score
 		t.BestDirection = -1
 	} else {
-		t.BestScore = 0
+		t.BestScore = math.MaxUint32
 		t.BestDirection = -1
 		for i, child := range t.Children {
 			child.Score()
-			if child.BestScore > t.BestScore {
+			if child.BestScore < t.BestScore {
 				t.BestScore = child.BestScore
 				t.BestDirection = i
 			}
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
+
