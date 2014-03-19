@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	height = 7
-	reps = 3
+	height = 6
+	reps = 5
 	concurrencyDepth = 2
 )
 

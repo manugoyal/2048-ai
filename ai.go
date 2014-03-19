@@ -6,7 +6,6 @@ package main
 type Tree struct {
 	G *Grid
 	Children []*Tree
-	Done bool
 	BestScore uint32
 	BestDirection int
 }
@@ -14,7 +13,7 @@ type Tree struct {
 // NewTree returns an tree with a starting grid, that is, a grid with
 // two tiles of value 2 placed randomly.
 func NewTree() *Tree {
-	ret := Tree{NewGrid(), nil, false, 0, 0}
+	ret := Tree{NewGrid(), nil, 0, 0}
 	ret.G.PlaceRandom()
 	ret.G.PlaceRandom()
 	return &ret
@@ -44,14 +43,12 @@ func (t *Tree) Fill(height, concurrencyDepth int, fin chan bool) {
 		t.Children = make([]*Tree, 4)
 		
 		for i := 0; i < 4; i++ {
-			node := &Tree{t.G.Clone(), nil, false, 0, 0}
+			node := &Tree{t.G.Clone(), nil, 0, 0}
 			if node.G.Move(i) {
 				// We only execute the move if tiles would be moving
 				t.Children[i] = node
 
-				if !node.G.PlaceRandom() {
-					node.Done = true
-				} else {
+				if node.G.PlaceRandom() {
 					if concurrencyDepth > 0 {
 						go node.Fill(height-1, concurrencyDepth-1, subfin)
 						fills++
@@ -68,7 +65,7 @@ func (t *Tree) Fill(height, concurrencyDepth int, fin chan bool) {
 	} else {
 		// Recursively fill the children that aren't done
 		for _, node := range t.Children {
-			if node != nil && !node.Done {
+			if node != nil && node.Children != nil {
 				node.Fill(height-1, concurrencyDepth-1, generateFinChan(concurrencyDepth))
 			}
 		}
@@ -86,7 +83,7 @@ func (t *Tree) Score() {
 	if t == nil {
 		return
 	}
-	if t.Children == nil || t.Done {
+	if t.Children == nil {
 		t.BestScore = t.G.Score
 		t.BestDirection = -1
 	} else {
