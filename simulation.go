@@ -36,12 +36,13 @@ func main() {
 		g.Move(avgBest)
 		moves++
 
-		fmt.Printf("%s\n", g)
-
 		if !g.PlaceRandom() {
 			fmt.Println("Couldn't place piece. Game over")
 			break;
 		}
+
+		fmt.Printf("%s\n", g)
+
 	}
 
 	fmt.Printf("After %d moves:\n", moves)
