@@ -15,11 +15,10 @@ func main() {
 	g.PlaceRandom()
 
 	fmt.Println(g)
-	fmt.Println()
 
 	const (
-		height = 10
-		reps = 1
+		height = 7
+		reps = 5
 		concurrencyDepth = 2
 	)
 
@@ -53,17 +52,12 @@ func main() {
 		g.Move(avgBest)
 		moves++
 
-		fmt.Println(g)
-		fmt.Println()
-
 		if !g.PlaceRandom() {
 			fmt.Println("Couldn't place piece. Game over")
 			break;
 		}
-		// if g.Score > 25000 {
-		// 	fmt.Println("Reached maximum score. Game over")
-		// 	break;
-		// }
+
+		fmt.Println(g)
 	}
 
 	fmt.Printf("After %d moves:\n", moves)
