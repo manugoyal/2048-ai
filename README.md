@@ -1,2 +1,2 @@
-Run with ``go run simulation.go ai.go grid.go``. You can tweak the
-pruning parameters in ``simulation.go``.
+Compile with ``make all``. Run with ``./simulation``. Run tests with
+``make check``.
