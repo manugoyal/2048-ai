@@ -7,14 +7,14 @@ import (
 	"runtime"
 )
 
-const (
+var (
+	threadNum int = runtime.NumCPU()
 	height = 6
-	reps = 5
-	concurrencyDepth = 2
+	reps = threadNum
 )
 
 func main() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	runtime.GOMAXPROCS(threadNum)
 	rand.Seed(time.Now().UnixNano())
 
 	g := NewGrid()
@@ -26,7 +26,7 @@ func main() {
 	moves := 0
 
 	for {
-		avgBest := g.NextMove(height, reps, concurrencyDepth)
+		avgBest := g.NextMove(height, reps, threadNum)
 		if avgBest == -1 {
 			fmt.Println("Couldn't find good direction. Game over")
 			break

@@ -63,8 +63,8 @@ func TestPlaceRandom(t *testing.T) {
 			total += g.Tiles[r][c]
 		}
 	}
-	if total != 2 {
-		t.Fatalf("PlaceRandom didn't place exactly one 2")
+	if total != 2 && total != 4 {
+		t.Fatalf("PlaceRandom didn't place exactly one 2 or 4")
 	}
 
 	for r := 0; r < rows; r++ {
