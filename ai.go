@@ -3,6 +3,11 @@
 // are random.
 package main
 
+import (
+	"math"
+	"sync"
+)
+
 type Tree struct {
 	G *Grid
 	Children []*Tree
@@ -10,68 +15,30 @@ type Tree struct {
 	BestDirection int
 }
 
-// NewTree returns an tree with a starting grid, that is, a grid with
-// two tiles of value 2 placed randomly.
+// NewTree returns an tree with an empty grid
 func NewTree() *Tree {
-	ret := Tree{NewGrid(), nil, 0, 0}
-	ret.G.PlaceRandom()
-	ret.G.PlaceRandom()
-	return &ret
-}
-
-func generateFinChan(concurrencyDepth int) chan bool {
-	if concurrencyDepth > 0 {
-		return make(chan bool, 4)
-	}
-	return nil
+	return &Tree{NewGrid(), nil, 0, 0}
 }
 
 // Given the height of the tree, it will fill out the tree to nodes of
-// height 0. If the tree already has children, it won't generate new
-// ones, but it will recursively call Fill. This should allow for
-// iterative deepening.
-func (t *Tree) Fill(height, concurrencyDepth int, fin chan bool) {
+// height 0.
+func (t *Tree) Fill(height int) {
 	if height == 0 {
 		return
 	}
-	if t.Children == nil {
-		// Generate new children. If it's within the concurrency
-		// depth, do it concurrently
-		subfin := generateFinChan(concurrencyDepth)
-		fills := 0
+	// Generate new children
+	t.Children = make([]*Tree, 4)
+	
+	for i := 0; i < 4; i++ {
+		node := &Tree{t.G.Clone(), nil, 0, 0}
+		if node.G.Move(i) {
+			// We only execute the move if tiles would be moving
+			t.Children[i] = node
 
-		t.Children = make([]*Tree, 4)
-		
-		for i := 0; i < 4; i++ {
-			node := &Tree{t.G.Clone(), nil, 0, 0}
-			if node.G.Move(i) {
-				// We only execute the move if tiles would be moving
-				t.Children[i] = node
-
-				if node.G.PlaceRandom() {
-					if concurrencyDepth > 0 {
-						go node.Fill(height-1, concurrencyDepth-1, subfin)
-						fills++
-					} else {
-						node.Fill(height-1, concurrencyDepth, subfin)
-					}
-				}
+			if node.G.PlaceRandom() {
+				node.Fill(height-1)
 			}
 		}
-		
-		for i := 0; i < fills; i++ {
-			<-subfin
-		}
-	} else {
-		// Recursively fill the children that aren't done
-		for _, node := range t.Children {
-			if node != nil && node.Children != nil {
-				node.Fill(height-1, concurrencyDepth-1, generateFinChan(concurrencyDepth))
-			}
-		}
-	}
-	if fin != nil {
-		fin <- true
 	}
 }
 
@@ -103,23 +70,46 @@ func (t *Tree) Score() {
 
 // Given a grid and some parameters, it figures out the next best
 // move. If it returns -1, that means it couldn't find a move.
-func (g *Grid) NextMove(height, reps, concurrencyDepth int) int {
-	counts := map[int]int{LEFT: 0, RIGHT: 0, UP: 0, DOWN: 0}
-	for j := 0; j < reps; j++ {
-		t := NewTree()
-		t.G = g.Clone()
-		t.Fill(height, concurrencyDepth, nil)
-		t.Score()
-		counts[t.BestDirection]++
-	}
-
-	avgBest := -1
-	avgOcc := 0
-	for k, v := range counts {
-		if v > avgOcc {
-			avgBest = k
-			avgOcc = v
+func (g *Grid) NextMove(height, reps, threadNum int) int {
+	directions := make(chan int)
+	bestDirection := make(chan int)
+	// This goroutine accumulates the directions from generating trees
+	// and returns the best direction on the bestDirection channel.
+	go func() {
+		counts := map[int]int{LEFT: 0, RIGHT: 0, UP: 0, DOWN: 0}
+		for dir := range directions {
+			counts[dir]++
 		}
+		maxDir, maxOcc := 0, 0
+		for direction, occurences := range counts {
+			if occurences > maxOcc {
+				maxDir, maxOcc = direction, occurences
+			}
+		}
+		bestDirection <- maxDir
+	}()
+	// We round the number of reps to a multiple of threadNum when
+	// calculating repsPerThread
+	repsPerThread := int(math.Ceil(float64(reps) / float64(threadNum)))
+	var wg sync.WaitGroup;
+	wg.Add(threadNum)
+	for i := 0; i < threadNum; i++ {
+		// This goroutine creates a tree repsPerThread times and
+		// adds each resulting direction to the directions channel
+		go func() {
+			for j := 0; j < repsPerThread; j++ {
+				t := NewTree()
+				t.G = g.Clone()
+				t.Fill(height)
+				t.Score()
+				if t.BestDirection >= 0 && t.BestDirection < 4 {
+					directions <- t.BestDirection
+				}
+			}
+			wg.Done()
+		}()
 	}
-	return avgBest
+	wg.Wait()
+	close(directions)
+	return <-bestDirection
 }
