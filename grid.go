@@ -17,16 +17,14 @@ const (
 
 type GridNum uint16
 type Grid struct {
-	Tiles [][]GridNum
+	Tiles [][cols]GridNum
 	Score uint32
 }
 
 // NewGrid returns an empty grid
 func NewGrid() *Grid {
-	g := make([][]GridNum, rows)
-	for i := range g {
-		g[i] = make([]GridNum, cols)
-	}
+	var gArray [rows][cols]GridNum
+	g := gArray[:]
 	return &Grid{g, 0}
 }
 
@@ -44,26 +42,24 @@ func FromSparseGrid(vals []int, score uint32) *Grid {
 
 // Clone returns an independent copy of the grid
 func (grid *Grid) Clone() *Grid {
-	g := NewGrid()
-	for i := range g.Tiles {
-		copy(g.Tiles[i], grid.Tiles[i])
-	}
-	g.Score = grid.Score
-	return g
+	var newGArray [rows][cols]GridNum
+	newG := newGArray[:]
+	copy(newG, grid.Tiles)
+	return &Grid{newG, grid.Score}
 }
 
 // Places a 2 or 4 tile (90% chance it's a 2) at a random place in the
 // board. Assumes the random number generator is already seeded. If
 // there is no place for a tile, it returns false.
-func (grid *Grid) PlaceRandom() bool {
+func (grid *Grid) PlaceRandom(localRand *rand.Rand) bool {
 	// The random number is a position to start searching at, which
 	// wraps around.
 	const total = rows * cols
 	var tileval GridNum = 2
-	if rand.Float32() < 0.1 {
+	if localRand.Float32() < 0.1 {
 		tileval = 4
 	}
-	startPos := rand.Intn(total)
+	startPos := localRand.Intn(total)
 	for i := (startPos + 1) % total; i != startPos; i = (i + 1) % total {
 		r, c := i/cols, i%cols
 		if grid.Tiles[r][c] == 0 {

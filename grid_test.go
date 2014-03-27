@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+	"time"
+)
 
 func TestClone(t *testing.T) {
 	g := NewGrid()
@@ -54,7 +58,8 @@ func TestMovement(t *testing.T) {
 func TestPlaceRandom(t *testing.T) {
 	g := NewGrid()
 
-	if !g.PlaceRandom() {
+	localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	if !g.PlaceRandom(localRand) {
 		t.Fatalf("PlaceRandom on empty grid should return true")
 	}
 	var total GridNum = 0

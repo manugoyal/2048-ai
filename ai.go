@@ -4,8 +4,8 @@
 package main
 
 import (
-	"math"
-	"sync"
+	"math/rand"
+	"time"
 )
 
 type Tree struct {
@@ -22,7 +22,7 @@ func NewTree() *Tree {
 
 // Given the height of the tree, it will fill out the tree to nodes of
 // height 0.
-func (t *Tree) Fill(height int) {
+func (t *Tree) Fill(height int, localRand *rand.Rand) {
 	if height == 0 {
 		return
 	}
@@ -35,8 +35,8 @@ func (t *Tree) Fill(height int) {
 			// We only execute the move if tiles would be moving
 			t.Children[i] = node
 
-			if node.G.PlaceRandom() {
-				node.Fill(height - 1)
+			if node.G.PlaceRandom(localRand) {
+				node.Fill(height-1, localRand)
 			}
 		}
 	}
@@ -88,28 +88,37 @@ func (g *Grid) NextMove(height, reps, threadNum int) int {
 		}
 		bestDirection <- maxDir
 	}()
-	// We round the number of reps to a multiple of threadNum when
-	// calculating repsPerThread
-	repsPerThread := int(math.Ceil(float64(reps) / float64(threadNum)))
-	var wg sync.WaitGroup
-	wg.Add(threadNum)
-	for i := 0; i < threadNum; i++ {
+	baseReps, leftoverReps := reps/threadNum, reps%threadNum
+	iterations := threadNum
+	if baseReps == 0 {
+		iterations = leftoverReps
+	}
+	loopChan := make(chan bool, iterations)
+	t := time.Now().UnixNano()
+	for i := 0; i < iterations; i++ {
 		// This goroutine creates a tree repsPerThread times and
 		// adds each resulting direction to the directions channel
-		go func() {
+		go func(i int) {
+			repsPerThread := baseReps
+			if i < leftoverReps {
+				repsPerThread++
+			}
+			localRand := rand.New(rand.NewSource(t + int64(i)))
 			for j := 0; j < repsPerThread; j++ {
 				t := NewTree()
 				t.G = g.Clone()
-				t.Fill(height)
+				t.Fill(height, localRand)
 				t.Score()
 				if t.BestDirection >= 0 && t.BestDirection < 4 {
 					directions <- t.BestDirection
 				}
 			}
-			wg.Done()
-		}()
+			loopChan <- true
+		}(i)
 	}
-	wg.Wait()
+	for i := 0; i < iterations; i++ {
+		<-loopChan
+	}
 	close(directions)
 	return <-bestDirection
 }

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 	"runtime"
+	"runtime/pprof"
 	"time"
 )
 
@@ -15,11 +19,21 @@ var (
 
 func main() {
 	runtime.GOMAXPROCS(threadNum)
-	rand.Seed(time.Now().UnixNano())
+	var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+	flag.Parse()
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
+	localRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	g := NewGrid()
-	g.PlaceRandom()
-	g.PlaceRandom()
+	g.PlaceRandom(localRand)
+	g.PlaceRandom(localRand)
 
 	fmt.Printf("%s\n", g)
 
@@ -36,7 +50,7 @@ func main() {
 		g.Move(avgBest)
 		moves++
 
-		if !g.PlaceRandom() {
+		if !g.PlaceRandom(localRand) {
 			fmt.Println("Couldn't place piece. Game over")
 			break
 		}
