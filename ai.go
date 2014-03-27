@@ -9,9 +9,9 @@ import (
 )
 
 type Tree struct {
-	G *Grid
-	Children []*Tree
-	BestScore uint32
+	G             *Grid
+	Children      []*Tree
+	BestScore     uint32
 	BestDirection int
 }
 
@@ -28,7 +28,7 @@ func (t *Tree) Fill(height int) {
 	}
 	// Generate new children
 	t.Children = make([]*Tree, 4)
-	
+
 	for i := 0; i < 4; i++ {
 		node := &Tree{t.G.Clone(), nil, 0, 0}
 		if node.G.Move(i) {
@@ -36,7 +36,7 @@ func (t *Tree) Fill(height int) {
 			t.Children[i] = node
 
 			if node.G.PlaceRandom() {
-				node.Fill(height-1)
+				node.Fill(height - 1)
 			}
 		}
 	}
@@ -91,7 +91,7 @@ func (g *Grid) NextMove(height, reps, threadNum int) int {
 	// We round the number of reps to a multiple of threadNum when
 	// calculating repsPerThread
 	repsPerThread := int(math.Ceil(float64(reps) / float64(threadNum)))
-	var wg sync.WaitGroup;
+	var wg sync.WaitGroup
 	wg.Add(threadNum)
 	for i := 0; i < threadNum; i++ {
 		// This goroutine creates a tree repsPerThread times and

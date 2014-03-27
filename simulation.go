@@ -3,14 +3,14 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"time"
 	"runtime"
+	"time"
 )
 
 var (
 	threadNum int = runtime.NumCPU()
-	height = 6
-	reps = threadNum
+	height        = 6
+	reps          = threadNum
 )
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 
 		if !g.PlaceRandom() {
 			fmt.Println("Couldn't place piece. Game over")
-			break;
+			break
 		}
 
 		fmt.Printf("%s\n", g)

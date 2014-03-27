@@ -20,8 +20,8 @@ func TestClone(t *testing.T) {
 
 func TestMovement(t *testing.T) {
 	g := NewGrid()
-	g.Tiles[0][0] = 2;
-	g.Tiles[0][1] = 2;
+	g.Tiles[0][0] = 2
+	g.Tiles[0][1] = 2
 	if !g.Equal(FromSparseGrid([]int{0, 0, 2, 0, 1, 2}, 0)) {
 		t.Fatalf("initialization failed")
 	}
@@ -31,21 +31,21 @@ func TestMovement(t *testing.T) {
 		t.Fatalf("move right 1 failed")
 	}
 
-	g.Tiles[1][2] = 4;
+	g.Tiles[1][2] = 4
 	g.Move(UP)
 	if !g.Equal(FromSparseGrid([]int{0, 2, 4, 0, 3, 4}, 4)) {
 		t.Fatalf("move up 1 failed")
 	}
 
-	g.Move(LEFT);
+	g.Move(LEFT)
 	if !g.Equal(FromSparseGrid([]int{0, 0, 8}, 12)) {
 		t.Fatalf("move left 1 failed")
 	}
 
-	g.Tiles[1][0] = 2;
-	g.Tiles[2][2] = 16;
-	g.Tiles[3][2] = 16;
-	g.Move(DOWN);
+	g.Tiles[1][0] = 2
+	g.Tiles[2][2] = 16
+	g.Tiles[3][2] = 16
+	g.Move(DOWN)
 	if !g.Equal(FromSparseGrid([]int{3, 0, 2, 2, 0, 8, 3, 2, 32}, 44)) {
 		t.Fatalf("move down 1 failed")
 	}

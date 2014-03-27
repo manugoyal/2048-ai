@@ -60,18 +60,18 @@ func (grid *Grid) PlaceRandom() bool {
 	// wraps around.
 	const total = rows * cols
 	var tileval GridNum = 2
-	if (rand.Float32() < 0.1) {
-		tileval = 4;
+	if rand.Float32() < 0.1 {
+		tileval = 4
 	}
 	startPos := rand.Intn(total)
-	for i := (startPos+1) % total; i != startPos; i = (i + 1) % total {
-		r, c := i / cols, i % cols
+	for i := (startPos + 1) % total; i != startPos; i = (i + 1) % total {
+		r, c := i/cols, i%cols
 		if grid.Tiles[r][c] == 0 {
 			grid.Tiles[r][c] = tileval
 			return true
 		}
 	}
-	r, c := startPos / cols, startPos % cols
+	r, c := startPos/cols, startPos%cols
 	if grid.Tiles[r][c] == 0 {
 		grid.Tiles[r][c] = tileval
 		return true
